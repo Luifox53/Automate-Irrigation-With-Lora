@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .login-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            overflow: hidden;
+        }
+        
+        .login-header {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .login-form {
+            padding: 2rem;
+        }
+        
+        .form-control {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            padding: 12px 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            border-color: #28a745;
+            box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+        }
+        
+        .btn-login {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+        }
+        
+        .alert {
+            border-radius: 10px;
+            border: none;
+        }
+        
+        .demo-credentials {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .floating-icons {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -1;
+        }
+        
+        .floating-icon {
+            position: absolute;
+            color: rgba(255, 255, 255, 0.1);
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-icons">
+        <i class="fas fa-seedling floating-icon" style="top: 10%; left: 10%; font-size: 3rem; animation-delay: 0s;"></i>
+        <i class="fas fa-tint floating-icon" style="top: 20%; right: 10%; font-size: 2rem; animation-delay: 1s;"></i>
+        <i class="fas fa-leaf floating-icon" style="bottom: 20%; left: 15%; font-size: 2.5rem; animation-delay: 2s;"></i>
+        <i class="fas fa-sun floating-icon" style="bottom: 10%; right: 20%; font-size: 2rem; animation-delay: 3s;"></i>
+        <i class="fas fa-cloud-rain floating-icon" style="top: 50%; left: 5%; font-size: 1.5rem; animation-delay: 4s;"></i>
+        <i class="fas fa-tree floating-icon" style="top: 30%; right: 5%; font-size: 2rem; animation-delay: 5s;"></i>
+    </div>
+    
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="login-container">
+                    <div class="login-header">
+                        <i class="fas fa-seedling fa-3x mb-3"></i>
+                        <h2 class="mb-0">Otonom Sulama Sistemi</h2>
+                        <p class="mb-0 mt-2 opacity-75">Sisteme giriş yapın</p>
+                    </div>
+                    
+                    <div class="login-form">
+                        <% if (error) { %>
+                        <div class="alert alert-danger" role="alert">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <%= error %>
+                        </div>
+                        <% } %>
+                        
+                        <form action="/auth/login" method="POST">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">
+                                    <i class="fas fa-user me-2"></i>Kullanıcı Adı
+                                </label>
+                                <input type="text" class="form-control" id="username" name="username" required>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label for="password" class="form-label">
+                                    <i class="fas fa-lock me-2"></i>Şifre
+                                </label>
+                                <input type="password" class="form-control" id="password" name="password" required>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-success btn-login w-100">
+                                <i class="fas fa-sign-in-alt me-2"></i>
+                                Giriş Yap
+                            </button>
+                        </form>
+                        
+                        <div class="demo-credentials">
+                            <h6 class="mb-2">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Demo Hesapları:
+                            </h6>
+                            <div class="row">
+                                <div class="col-6">
+                                    <strong>Admin:</strong><br>
+                                    Kullanıcı: <code>admin</code><br>
+                                    Şifre: <code>password</code>
+                                </div>
+                                <div class="col-6">
+                                    <strong>Kullanıcı:</strong><br>
+                                    Kullanıcı: <code>user1</code><br>
+                                    Şifre: <code>password</code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

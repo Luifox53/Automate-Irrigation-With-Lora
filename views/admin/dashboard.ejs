@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        .dashboard-card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .region-card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+        
+        .region-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .region-header {
+            background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+            color: white;
+            border-radius: 15px 15px 0 0;
+            padding: 1rem;
+        }
+        
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        .metric-unit {
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+        
+        .valve-status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .valve-open {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .valve-closed {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .valve-control-btn {
+            border-radius: 20px;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .valve-control-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 1rem 0;
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+        }
+        
+        .stats-icon {
+            font-size: 2.5rem;
+            opacity: 0.8;
+        }
+        
+        .last-update {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        
+        .page-header {
+            background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .control-panel {
+            background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .btn-control {
+            border-radius: 10px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            margin: 0.25rem;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-control:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .scheduled-task {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border-left: 4px solid #007bff;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-seedling me-2"></i>
+                Otonom Sulama Sistemi
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/admin/dashboard">
+                            <i class="fas fa-tachometer-alt me-1"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin/valve-control">
+                            <i class="fas fa-cogs me-1"></i>
+                            Valf Kontrolü
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin/scheduler">
+                            <i class="fas fa-clock me-1"></i>
+                            Zamanlayıcı
+                        </a>
+                    </li>
+                </ul>
+                
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-1"></i>
+                            <%= user.name %>
+                            <span class="badge bg-warning text-dark ms-1">Admin</span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-user-cog me-2"></i>Profil</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form action="/auth/logout" method="POST" class="d-inline">
+                                    <button type="submit" class="dropdown-item">
+                                        <i class="fas fa-sign-out-alt me-2"></i>Çıkış Yap
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container-fluid mt-4">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="mb-2">
+                        <i class="fas fa-shield-alt me-3"></i>
+                        Admin Dashboard
+                    </h1>
+                    <p class="mb-0 opacity-75">Sistem yönetimi ve gelişmiş kontroller</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <div class="d-flex align-items-center justify-content-md-end">
+                        <i class="fas fa-wifi text-success me-2"></i>
+                        <span>Sistem Aktif</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Control Panel -->
+        <div class="control-panel">
+            <h4 class="mb-3">
+                <i class="fas fa-sliders-h me-2"></i>
+                Hızlı Kontroller
+            </h4>
+            <div class="row">
+                <div class="col-md-6">
+                    <button class="btn btn-success btn-control" onclick="openAllValves()">
+                        <i class="fas fa-unlock-alt me-2"></i>
+                        Tüm Valfleri Aç
+                    </button>
+                    <button class="btn btn-danger btn-control" onclick="closeAllValves()">
+                        <i class="fas fa-lock me-2"></i>
+                        Tüm Valfleri Kapat
+                    </button>
+                </div>
+                <div class="col-md-6">
+                    <button class="btn btn-info btn-control" onclick="refreshData()">
+                        <i class="fas fa-sync-alt me-2"></i>
+                        Verileri Yenile
+                    </button>
+                    <button class="btn btn-warning btn-control" onclick="emergencyStop()">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Acil Durdur
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="stats-card">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <i class="fas fa-thermometer-half stats-icon"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">Ortalama Sıcaklık</h6>
+                            <h3 class="mb-0">25.2°C</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="stats-card">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <i class="fas fa-tint stats-icon"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">Ortalama Nem</h6>
+                            <h3 class="mb-0">62%</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="stats-card">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <i class="fas fa-seedling stats-icon"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">Toprak Nemi</h6>
+                            <h3 class="mb-0">42%</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="stats-card">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <i class="fas fa-faucet stats-icon"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">Aktif Valfler</h6>
+                            <h3 class="mb-0">3/10</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Charts and Scheduled Tasks -->
+        <div class="row mb-4">
+            <div class="col-lg-8">
+                <div class="card dashboard-card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-line me-2"></i>
+                            Son 1 Hafta Verileri
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="weeklyChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card dashboard-card">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-calendar-alt me-2"></i>
+                            Zamanlanmış Görevler
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <% if (data.scheduledTasks && data.scheduledTasks.length > 0) { %>
+                            <% data.scheduledTasks.forEach(function(task) { %>
+                            <div class="scheduled-task">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1"><%= task.regionName %></h6>
+                                        <small class="text-muted">
+                                            <i class="fas fa-clock me-1"></i>
+                                            <%= new Date(task.scheduledTime).toLocaleString('tr-TR') %>
+                                        </small>
+                                        <br>
+                                        <small class="text-muted">
+                                            <i class="fas fa-hourglass-half me-1"></i>
+                                            <%= task.duration %> dakika
+                                        </small>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="cancelTask(<%= task.id %>)">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <% }); %>
+                        <% } else { %>
+                            <div class="text-center text-muted">
+                                <i class="fas fa-calendar-times fa-3x mb-3"></i>
+                                <p>Zamanlanmış görev bulunmuyor</p>
+                            </div>
+                        <% } %>
+                        <div class="text-center mt-3">
+                            <a href="/admin/scheduler" class="btn btn-primary btn-sm">
+                                <i class="fas fa-plus me-1"></i>
+                                Yeni Görev Ekle
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Regions Grid -->
+        <div class="row">
+            <div class="col-12 mb-3">
+                <h3>
+                    <i class="fas fa-map-marked-alt me-2 text-danger"></i>
+                    Bölge Durumları ve Kontroller
+                </h3>
+            </div>
+            
+            <% data.regions.forEach(function(region) { %>
+            <div class="col-lg-6 col-xl-4 mb-4">
+                <div class="card region-card">
+                    <div class="region-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">
+                                <i class="fas fa-map-marker-alt me-2"></i>
+                                <%= region.name %>
+                            </h6>
+                            <span class="valve-status <%= region.valveOpen ? 'valve-open' : 'valve-closed' %>">
+                                <i class="fas fa-<%= region.valveOpen ? 'unlock' : 'lock' %> me-1"></i>
+                                <%= region.valveOpen ? 'Açık' : 'Kapalı' %>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center mb-3">
+                            <div class="col-4">
+                                <div class="mb-2">
+                                    <i class="fas fa-thermometer-half text-danger fa-2x"></i>
+                                </div>
+                                <div class="metric-value text-danger"><%= region.temperature.toFixed(1) %></div>
+                                <div class="metric-unit">°C</div>
+                                <small class="text-muted">Sıcaklık</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="mb-2">
+                                    <i class="fas fa-tint text-info fa-2x"></i>
+                                </div>
+                                <div class="metric-value text-info"><%= region.humidity %></div>
+                                <div class="metric-unit">%</div>
+                                <small class="text-muted">Nem</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="mb-2">
+                                    <i class="fas fa-seedling text-success fa-2x"></i>
+                                </div>
+                                <div class="metric-value text-success"><%= region.soilMoisture %></div>
+                                <div class="metric-unit">%</div>
+                                <small class="text-muted">Toprak Nemi</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Valve Control Buttons -->
+                        <div class="d-grid gap-2">
+                            <button class="btn <%= region.valveOpen ? 'btn-danger' : 'btn-success' %> valve-control-btn"
+                                onclick="toggleValve(<%= region.id %>)">
+                            <i class="fas fa-<%= region.valveOpen ? 'lock' : 'unlock' %> me-2"></i>
+                            <%= region.valveOpen ? 'Valfi Kapat' : 'Valfi Aç' %>
+                            </button>
+                        </div>
+                        
+                        <hr>
+                        <div class="last-update text-center">
+                            <i class="fas fa-clock me-1"></i>
+                            Son güncelleme: <%= new Date(region.lastUpdate).toLocaleString('tr-TR') %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <% }); %>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="bg-light text-center text-muted py-3 mt-5">
+        <div class="container">
+            <p class="mb-0">
+                &copy; 2024 Otonom Sulama Sistemi. Tüm hakları saklıdır.
+                <span class="ms-3">
+                    <i class="fas fa-wifi text-success me-1"></i>
+                    Sistem Aktif
+                </span>
+            </p>
+        </div>
+    </footer>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Weekly Chart
+        const ctx = document.getElementById('weeklyChart').getContext('2d');
+        const weeklyChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: <%= JSON.stringify(data.weeklyData.labels) %>,
+                datasets: [
+                    {
+                        label: 'Sıcaklık (°C)',
+                        data: <%= JSON.stringify(data.weeklyData.temperature) %>,
+                        borderColor: 'rgb(255, 99, 132)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'Nem (%)',
+                        data: <%= JSON.stringify(data.weeklyData.humidity) %>,
+                        borderColor: 'rgb(54, 162, 235)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'Toprak Nemi (%)',
+                        data: <%= JSON.stringify(data.weeklyData.soilMoisture) %>,
+                        borderColor: 'rgb(75, 192, 192)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Haftalık Veri Trendi'
+                    },
+                    legend: {
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Valve control functions
+        function toggleValve(regionId) {
+            fetch(`/api/valve/${regionId}/toggle`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Hata: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Bir hata oluştu!');
+            });
+        }
+        
+        function openAllValves() {
+            if (confirm('Tüm valfleri açmak istediğinizden emin misiniz?')) {
+                fetch('/api/valves/open-all', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Hata: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Bir hata oluştu!');
+                });
+            }
+        }
+        
+        function closeAllValves() {
+            if (confirm('Tüm valfleri kapatmak istediğinizden emin misiniz?')) {
+                fetch('/api/valves/close-all', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Hata: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Bir hata oluştu!');
+                });
+            }
+        }
+        
+        function refreshData() {
+            location.reload();
+        }
+        
+        function emergencyStop() {
+            if (confirm('ACİL DURDURMA! Tüm valfler kapatılacak. Devam etmek istediğinizden emin misiniz?')) {
+                closeAllValves();
+            }
+        }
+        
+        function cancelTask(taskId) {
+            if (confirm('Bu zamanlanmış görevi iptal etmek istediğinizden emin misiniz?')) {
+                fetch(`/admin/scheduler/${taskId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Hata: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Bir hata oluştu!');
+                });
+            }
+        }
+        
+        // Auto refresh data every 30 seconds
+        setInterval(function() {
+            console.log('Veri güncelleniyor...');
+            // Gerçek projede AJAX ile veri güncellenecek
+        }, 30000);
+    </script>
+</body>
+</html>

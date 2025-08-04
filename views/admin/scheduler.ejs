@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        .page-header {
+            background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .scheduler-card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .scheduler-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            padding: 12px 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #6f42c1;
+            box-shadow: 0 0 0 0.2rem rgba(111, 66, 193, 0.25);
+        }
+        
+        .btn-scheduler {
+            border-radius: 10px;
+            padding: 12px 24px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-scheduler:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .task-item {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 5px solid #6f42c1;
+            transition: all 0.3s ease;
+        }
+        
+        .task-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .task-status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-running {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .status-completed {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-cancelled {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .region-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+        
+        .region-option {
+            position: relative;
+        }
+        
+        .region-option input[type="radio"] {
+            display: none;
+        }
+        
+        .region-option label {
+            display: block;
+            padding: 0.75rem;
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .region-option input[type="radio"]:checked + label {
+            background: #6f42c1;
+            color: white;
+            border-color: #6f42c1;
+        }
+        
+        .region-option label:hover {
+            border-color: #6f42c1;
+            background: #e9ecef;
+        }
+        
+        .region-option input[type="radio"]:checked + label:hover {
+            background: #5a2d91;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-seedling me-2"></i>
+                Otonom Sulama Sistemi
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin/dashboard">
+                            <i class="fas fa-tachometer-alt me-1"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin/valve-control">
+                            <i class="fas fa-cogs me-1"></i>
+                            Valf Kontrolü
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/admin/scheduler">
+                            <i class="fas fa-clock me-1"></i>
+                            Zamanlayıcı
+                        </a>
+                    </li>
+                </ul>
+                
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-1"></i>
+                            <%= user.name %>
+                            <span class="badge bg-warning text-dark ms-1">Admin</span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-user-cog me-2"></i>Profil</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form action="/auth/logout" method="POST" class="d-inline">
+                                    <button type="submit" class="dropdown-item">
+                                        <i class="fas fa-sign-out-alt me-2"></i>Çıkış Yap
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container-fluid mt-4">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="mb-2">
+                        <i class="fas fa-clock me-3"></i>
+                        Zamanlayıcı Yönetimi
+                    </h1>
+                    <p class="mb-0 opacity-75">Otomatik sulama görevleri planlayın ve yönetin</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <button class="btn btn-light btn-scheduler" data-bs-toggle="modal" data-bs-target="#addTaskModal">
+                        <i class="fas fa-plus me-2"></i>
+                        Yeni Görev Ekle
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <!-- Add Task Form -->
+            <div class="col-lg-4 mb-4">
+                <div class="card scheduler-card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-plus-circle me-2"></i>
+                            Yeni Görev Ekle
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="addTaskForm">
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-map-marker-alt me-2"></i>
+                                    Bölge Seçin
+                                </label>
+                                <div class="region-selector">
+                                    <% for(let i = 1; i <= 10; i++) { %>
+                                    <div class="region-option">
+                                        <input type="radio" id="region<%= i %>" name="regionId" value="<%= i %>" required>
+                                        <label for="region<%= i %>">Bölge <%= i %></label>
+                                    </div>
+                                    <% } %>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="action" class="form-label">
+                                    <i class="fas fa-cog me-2"></i>
+                                    İşlem
+                                </label>
+                                <select class="form-select" id="action" name="action" required>
+                                    <option value="">İşlem seçin...</option>
+                                    <option value="open">Valfi Aç</option>
+                                    <option value="close">Valfi Kapat</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="scheduledDate" class="form-label">
+                                    <i class="fas fa-calendar me-2"></i>
+                                    Tarih
+                                </label>
+                                <input type="date" class="form-control" id="scheduledDate" name="scheduledDate" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="scheduledTime" class="form-label">
+                                    <i class="fas fa-clock me-2"></i>
+                                    Saat
+                                </label>
+                                <input type="time" class="form-control" id="scheduledTime" name="scheduledTime" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="duration" class="form-label">
+                                    <i class="fas fa-hourglass-half me-2"></i>
+                                    Süre (dakika)
+                                </label>
+                                <input type="number" class="form-control" id="duration" name="duration" min="1" max="1440" placeholder="30" required>
+                            </div>
+                            
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-scheduler">
+                                    <i class="fas fa-save me-2"></i>
+                                    Görevi Kaydet
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Scheduled Tasks List -->
+            <div class="col-lg-8">
+                <div class="card scheduler-card">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-list me-2"></i>
+                            Zamanlanmış Görevler
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <% if (scheduledTasks && scheduledTasks.length > 0) { %>
+                            <% scheduledTasks.forEach(function(task) { %>
+                            <div class="task-item" id="task-<%= task.id %>">
+                                <div class="row align-items-center">
+                                    <div class="col-md-8">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <h6 class="mb-0 me-3">
+                                                <i class="fas fa-map-marker-alt me-2 text-primary"></i>
+                                                <%= task.regionName %>
+                                            </h6>
+                                            <span class="task-status status-<%= task.status %>">
+                                                <%= task.status === 'pending' ? 'Bekliyor' : 
+                                                    task.status === 'running' ? 'Çalışıyor' : 
+                                                    task.status === 'completed' ? 'Tamamlandı' : 'İptal Edildi' %>
+                                            </span>
+                                        </div>
+                                        
+                                        <div class="row text-muted small">
+                                            <div class="col-sm-6">
+                                                <i class="fas fa-calendar me-1"></i>
+                                                <%= new Date(task.scheduledTime).toLocaleDateString('tr-TR') %>
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <i class="fas fa-clock me-1"></i>
+                                                <%= new Date(task.scheduledTime).toLocaleTimeString('tr-TR', {hour: '2-digit', minute: '2-digit'}) %>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row text-muted small mt-1">
+                                            <div class="col-sm-6">
+                                                <i class="fas fa-cog me-1"></i>
+                                                <%= task.action === 'open' ? 'Valfi Aç' : 'Valfi Kapat' %>
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <i class="fas fa-hourglass-half me-1"></i>
+                                                <%= task.duration %> dakika
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-4 text-md-end">
+                                        <% if (task.status === 'pending') { %>
+                                        <button class="btn btn-sm btn-outline-warning me-2" onclick="editTask(<%= task.id %>)">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <% } %>
+                                        <button class="btn btn-sm btn-outline-danger" onclick="deleteTask(<%= task.id %>)">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <% }); %>
+                        <% } else { %>
+                            <div class="text-center py-5">
+                                <i class="fas fa-calendar-times fa-4x text-muted mb-3"></i>
+                                <h5 class="text-muted">Henüz zamanlanmış görev bulunmuyor</h5>
+                                <p class="text-muted">Sol taraftaki formu kullanarak yeni görev ekleyebilirsiniz.</p>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="bg-light text-center text-muted py-3 mt-5">
+        <div class="container">
+            <p class="mb-0">
+                &copy; 2024 Otonom Sulama Sistemi. Tüm hakları saklıdır.
+                <span class="ms-3">
+                    <i class="fas fa-wifi text-success me-1"></i>
+                    Sistem Aktif
+                </span>
+            </p>
+        </div>
+    </footer>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Set minimum date to today
+        document.getElementById('scheduledDate').min = new Date().toISOString().split('T')[0];
+        
+        // Form submission
+        document.getElementById('addTaskForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+            
+            fetch('/admin/scheduler/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    alert('Görev başarıyla eklendi!');
+                    location.reload();
+                } else {
+                    alert('Hata: ' + result.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Bir hata oluştu!');
+            });
+        });
+        
+        function deleteTask(taskId) {
+            if (confirm('Bu görevi silmek istediğinizden emin misiniz?')) {
+                fetch(`/admin/scheduler/${taskId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        const taskElement = document.getElementById(`task-${taskId}`);
+                        if (taskElement) {
+                            taskElement.remove();
+                        }
+                        alert('Görev başarıyla silindi!');
+                        // Sayfa boşsa yenile
+                        const remainingTasks = document.querySelectorAll('.task-item');
+                        if (remainingTasks.length === 0) {
+                            location.reload();
+                        }
+                    } else {
+                        alert('Hata: ' + result.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Bir hata oluştu!');
+                });
+            }
+        }
+        
+        function editTask(taskId) {
+            // Bu fonksiyon gelecekte düzenleme modalı açacak
+            alert('Düzenleme özelliği yakında eklenecek!');
+        }
+        
+        // Auto refresh every minute to update task statuses
+        setInterval(function() {
+            // Gerçek projede AJAX ile görev durumları güncellenecek
+            console.log('Görev durumları kontrol ediliyor...');
+        }, 60000);
+    </script>
+</body>
+</html>
